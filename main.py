@@ -44,7 +44,8 @@ def HandleSwiping(handPos, history, gesture_cooldown):
         start_X, start_Y = history[0]
         end_X, end_Y = history[-1]
 
-        dist_X = end_X - start_X
+        cv2.circle(img, (int(start_X), int(start_Y)), 10, (0,255,0),cv2.FILLED)
+
         dist_Y = end_Y - start_Y
 
         if abs(dist_Y) > min_swipe_Y and abs(dist_Y) < max_swipe_Y:

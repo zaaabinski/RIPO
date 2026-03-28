@@ -85,8 +85,6 @@ print("Kamera uruchomiona. Wciśnij 'q', aby wyjść.")
 print("Naciśnij 's', aby zapisać wynik testu (np. gdy pokazujesz OTWARTĄ dłoń).")
 
 
-
-
 while True:
     success, img = cap.read()
     if not success:
@@ -106,7 +104,7 @@ while True:
 
                 #curr_pos posiada współrzędne (x,y) punktu 8 (punkt palca)
                 curr_pos = hand["lmList"][8][:2]
-                
+
 
                 # --- ELASTYCZNA LOGIKA GESTÓW ---
 
@@ -127,7 +125,8 @@ while True:
                         base_pos = curr_pos
                         start_time = time.time()
 
-                    dist = ((curr_pos[0] - base_pos[0])**2 + (curr_pos[1] - base_pos[1])**2)**0.5
+                    # dist = ((curr_pos[0] - base_pos[0])**2 + (curr_pos[1] - base_pos[1])**2)**0.5
+                    dist = curr_pos[1] - base_pos[1]
 
                     if dist < dead_zone and not is_locked:
                         elapsed = time.time() - start_time
@@ -158,13 +157,11 @@ while True:
                 elif fingers.count(1) >= 4:
                     gesture_text = "OTWARTA"
                     # history.clear()
-
                     base_pos, start_time, is_locked = None, None, False
                 
-                elif fingers[4] == 1 and fingers[1:3] == 0:
+                elif fingers[4] == 1 and fingers[1] == 0 and fingers[2] == 0 and fingers[3] == 0:
                     gesture_text = "COFNIJ"
                     base_pos, start_time, is_locked = None, None, False
-
                     
                 else:
                     base_pos, start_time, is_locked = None, None, False
@@ -187,8 +184,9 @@ while True:
     cv2.putText(img, f'Gest: {gesture_text}', (15, 40),
                 cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv2.LINE_AA)
     
-    cv2.putText(img, f'Odchyl: {gesture_diff}', (15, 90),
+    cv2.putText(img, f'Odchyl Y: {gesture_diff}', (15, 90),
                 cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv2.LINE_AA)
+
     
     cv2.putText(img, f'FPS: {int(fps)}', (500, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 

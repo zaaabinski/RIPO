@@ -63,10 +63,13 @@ pTime = 0
 # -------- Zmienne do wykrywania punktu zaczepienia --------
 
 #Zakres martwej strefy do wykrycia punktu zaczepienia
-dead_zone = 30
+dead_zone = 10
 
 #Czas w sekundach jaki należy odczekać do "załapania" punktu zaczepienia
 waiting_time = .2
+
+#Dystans jak palec wskazujący i środkowy muszą być blisko, żeby wyłapać gest scrollowania
+index_middle_threshold = 40
 
 #Zmienne do oznaczenia punktu zaczepnego
 base_pos = None
@@ -103,7 +106,11 @@ while True:
                 fingers = detector.fingersUp(hand)
 
                 #curr_pos posiada współrzędne (x,y) punktu 8 (punkt palca)
-                curr_pos = hand["lmList"][8][:2]
+                curr_pos = hand["lmList"][8][:2] 
+                curr_pos[0] += hand["lmList"][12][0]
+                curr_pos[1] += hand["lmList"][12][1]
+                curr_pos[0] //=2
+                curr_pos[1] //=2
 
 
                 # --- ELASTYCZNA LOGIKA GESTÓW ---
@@ -115,12 +122,15 @@ while True:
                     base_pos, start_time, is_locked = None, None, False
 
 
-                # 2. TYLKO WSKAZUJĄCY W GÓRĘ
+                # 2. TYLKO WSKAZUJĄCY I ŚRODKOWY W GÓRĘ
                 # fingers[1] to palec wskazujący, a [2], [3], [4] to reszta palców.
                 # Nie sprawdzamy fingers[0] (kciuka), bo lubi oszukiwać.
-                elif fingers[1] == 1 and fingers[2] == 0 and fingers[3] == 0 and fingers[4] == 0:
+                elif fingers[1] == 1 and fingers[2] == 1 and fingers[3] == 0 and fingers[4] == 0:
+                    point_dist = round(((hand["lmList"][8][0] - hand["lmList"][12][0])**2 + (hand["lmList"][8][1] - hand["lmList"][12][1])**2)**0.5)
                     gesture_text = "PRZEWIJANIE?"
                     
+                    # if not is_locked : print(point_dist)
+
                     if base_pos is None:
                         base_pos = curr_pos
                         start_time = time.time()
@@ -128,30 +138,42 @@ while True:
                     # dist = ((curr_pos[0] - base_pos[0])**2 + (curr_pos[1] - base_pos[1])**2)**0.5
                     dist = curr_pos[1] - base_pos[1]
 
-                    if dist < dead_zone and not is_locked:
-                        elapsed = time.time() - start_time
-                        if elapsed >= waiting_time:
-                            is_locked = True
-                        else:
-                            gesture_text = f"LADOWANIE: {int(elapsed/waiting_time*100)}%"
-                    elif not is_locked:
-                        base_pos, start_time, is_locked = curr_pos, time.time(), False
+                    # if not is_locked : print(dist) 
+                    
+                    #Palec wskazujący i środkowy muszą być blisko siebie
+                    if (point_dist <= index_middle_threshold):
+                        
+                        if abs(dist) < dead_zone and not is_locked:
+                            elapsed = time.time() - start_time
+                            if elapsed >= waiting_time:
+                                is_locked = True
+                            else:
+                                gesture_text = f"LADOWANIE: {int(elapsed/waiting_time*100)}%"
+                        elif not is_locked:
+                            base_pos, start_time, is_locked = curr_pos, time.time(), False
 
-                    if is_locked:
-                        gesture_text = "PUNKT ZLAPANY"
+                        if is_locked:
+                            gesture_text = "PUNKT ZLAPANY"
 
-                        cv2.circle(img, (int(curr_pos[0]), int(curr_pos[1])), 10, (0,255,0),cv2.FILLED)
-                        cv2.circle(img, (int(base_pos[0]), int(base_pos[1])), 15, (0,255,0),cv2.FILLED)
+                            cv2.circle(img, (int(curr_pos[0]), int(curr_pos[1])), 10, (0,255,0),cv2.FILLED)
+                            cv2.circle(img, (int(base_pos[0]), int(base_pos[1])), 15, (0,255,0),cv2.FILLED)
 
-                        cv2.line(img, curr_pos, base_pos, (0,255,0),5)
+                            cv2.line(img, curr_pos, base_pos, (0,255,0),5)
 
-                        gesture_diff = round(dist)
+                            gesture_diff = round(dist)
+
+                    else:
+                        base_pos, start_time, is_locked = None, None, False
+                        
+                
                     
                     #Stary sposób
                     #hand_pos = hand["lmList"][8][:2]
                     #gesture_cooldown = HandleSwiping(hand_pos, history, gesture_cooldown)
                     
-
+                # TYLKO WSKAZUJĄCY W GÓRĘ
+                elif fingers[1] == 1 and fingers[2] == 0 and fingers[3] == 0 and fingers[4] == 0:
+                    gesture_text="PRZYBLIZANIE?"
 
                 # 3. OTWARTA - co najmniej 4 palce podniesione
                 elif fingers.count(1) >= 4:

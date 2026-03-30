@@ -15,51 +15,6 @@ cap = cv2.VideoCapture(0)
 detector = HandDetector(maxHands=2, detectionCon=0.7)
 pTime = 0
 
-
-#Ile klatek ma przypaść na bufor
-# frame_count = 20
-
-# #Zakres różnicy w pozycji X między klatką pierwszą, a końcową #FIXME
-# swipe_dist_thres_X = 50
-
-# #Zakres różnicy w pozycji y między klatką pierwszą, a końcową #FIXME
-# swipe_dist_thres_Y = 150
-
-# min_swipe_Y = 50
-# max_swipe_Y = 100
-
-# #Na ile klatek zblokować wykrycie kolejnego gestu dynamicznego
-# gesture_cooldown_limit = 60
-#Bufor na daną liczbę klatek do sprawdzania gestu dynamicznego (tutaj na razie przewjanie palcem)
-# history = deque(maxlen=frame_count)
-
-#Ograniczenie, żeby gest nie został wykryty kilka razy pod rząd (na zasadzie licznika klatek)
-# gesture_cooldown = 0
-
-#Funkcja obsługująca dynamiczny gest przewijania
-# def HandleSwiping(handPos, history, gesture_cooldown):
-#     history.append(handPos)
-
-#     global gesture_text
-#     global gesture_diff
-
-#     if len(history) == frame_count and gesture_cooldown == 0:
-#         start_X, start_Y = history[0]
-#         end_X, end_Y = history[-1]
-
-#         cv2.circle(img, (int(start_X), int(start_Y)), 10, (0,255,0),cv2.FILLED)
-
-#         dist_Y = end_Y - start_Y
-
-#         if abs(dist_Y) > min_swipe_Y and abs(dist_Y) < max_swipe_Y:
-#             gesture_text = "PRZEWIJANIE"
-#             gesture_diff = f"{dist_Y}"
-#             gesture_cooldown = gesture_cooldown_limit
-#             history.clear()
-
-#     return gesture_cooldown
-
-
 # -------- Zmienne do wykrywania punktu zaczepienia --------
 
 #Zakres martwej strefy do wykrycia punktu zaczepienia
@@ -96,7 +51,6 @@ while True:
     img = cv2.flip(img, 1)
     hands, img = detector.findHands(img, flipType=False)
 
-    # if gesture_cooldown == 0:
     gesture_text = "BRAK"
     gesture_diff = "0"
 
@@ -105,7 +59,7 @@ while True:
             if hand["type"] == "Right":
                 fingers = detector.fingersUp(hand)
 
-                #curr_pos posiada współrzędne (x,y) punktu 8 (punkt palca)
+                #Średnia punktów palca wskazującego i środkowego
                 curr_pos = hand["lmList"][8][:2] 
                 curr_pos[0] += hand["lmList"][12][0]
                 curr_pos[1] += hand["lmList"][12][1]
@@ -118,7 +72,6 @@ while True:
                 # 1. ZAMKNIĘTA (Pięść) - 0 palców w górze
                 if fingers.count(1) == 0:
                     gesture_text = "ZAMKNIETA"
-                    # history.clear()
                     base_pos, start_time, is_locked = None, None, False
 
 
@@ -135,11 +88,8 @@ while True:
                         base_pos = curr_pos
                         start_time = time.time()
 
-                    # dist = ((curr_pos[0] - base_pos[0])**2 + (curr_pos[1] - base_pos[1])**2)**0.5
                     dist = curr_pos[1] - base_pos[1]
 
-                    # if not is_locked : print(dist) 
-                    
                     #Palec wskazujący i środkowy muszą być blisko siebie
                     if (point_dist <= index_middle_threshold):
                         
@@ -188,12 +138,6 @@ while True:
                 else:
                     base_pos, start_time, is_locked = None, None, False
 
-                #Obsługa gestu przewijania dostępna tylko z poziomu gestu WSKAZUJĄCY
-                
-    #Mechanizm oczekiwania na wykrycie gestu
-    # if gesture_cooldown > 0:
-    #     gesture_cooldown -= 1
-
     cTime = time.time()
     fps = 1 / (cTime - pTime)
     pTime = cTime
@@ -221,8 +165,6 @@ while True:
         print(f"Zapisano pomiar: Wykryto {gesture_text}")
 
     if key == ord('q'): break
-    # if cv2.waitKey(1) & 0xFF == ord('q'):
-    #     break
 
 log_file.close()
 cap.release()

@@ -17,7 +17,7 @@ cap = cv2.VideoCapture(0)
 cam_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 cam_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-detector = HandDetector(maxHands=1, detectionCon=0.7) 
+detector = HandDetector(maxHands=1, detectionCon=0.7)
 pTime = 0
 
 dead_zone = 10
@@ -169,7 +169,7 @@ while True:
     fps = 1 / (cTime - pTime) if cTime - pTime > 0 else 0
     pTime = cTime
 
-    cv2.rectangle(img, (0, 0), (450, 120), (0, 0, 0), cv2.FILLED)
+    cv2.rectangle(img, (0, 0), (400, 90), (0, 0, 0), cv2.FILLED)
     cv2.putText(img, f'Gest: {gesture_text}', (15, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv2.LINE_AA)
     cv2.putText(img, f'Odchyl Y: {gesture_diff}', (15, 90), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv2.LINE_AA)
     cv2.putText(img, f'FPS: {int(fps)}', (cam_w - 150, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
